@@ -1,29 +1,31 @@
-name: Stable Release Build (Galaxy A50)
+name: Development Build (Galaxy A50)
 
 on:
   workflow_dispatch:
   push:
     branches:
-      - "android-*"
+      - "wip-*"
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
 
     strategy:
       fail-fast: true
       matrix:
-        type: [oneui-12-e]
+        type: [oneui-12-e, oneui-12-p, oneui-11-e, oneui-11-p, aosp-12-e, aosp-12-p, aosp-11-e, aosp-11-p]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
           fetch-depth: 0
 
-      - uses: szenius/set-timezone@v1.0
+      - uses: szenius/set-timezone@v2.0
         with:
-          timezoneLinux: "Asia/Kolkata"
+          timezoneLinux: "Asia/Ho_Chi_Minh"
+          timezoneMacos: "Asia/Ho_Chi_Minh"
+          timezoneWindows: "Indochina Time"
 
       - name: Export build branch
         run: echo "branch=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
@@ -33,7 +35,7 @@ jobs:
         run: sudo apt-get update
 
       - name: Install Debian/Ubuntu dependencies
-        run: sudo apt-get install bzip2 lib32stdc++6 libc6-dev-i386 libncurses5 jq -y
+        run: sudo apt-get install bzip2 lib32stdc++6 libc6-dev-i386 libncurses6 jq -y
 
       - name: Unshallow and Update KernelSU Submodule
         run : |
@@ -54,7 +56,7 @@ jobs:
           ./build.sh --automated --device a50 --variant $VARIANT --android $ANDROID -$SELINUX --kernelsu
 
       - name: Upload kernel image artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.type }} Kernel Image (KernelSU)
           path: "out/boot.img"
@@ -69,14 +71,14 @@ jobs:
         run: cp .config ./release/kernel_config_a50_$VARIANT-$ANDROID-$SELINUX.txt
 
       - name: Upload release package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.type }} Release
           path: "release"
           if-no-files-found: error
 
       - name: Upload build config artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.type }} Kernel Configs
           path: release/kernel_config_a50_${{ env.VARIANT }}-${{ env.ANDROID }}-${{ env.SELINUX }}.txt
